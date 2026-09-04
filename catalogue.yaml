@@ -1,0 +1,80 @@
+- name: configuring catalogue
+  hosts: catalogue
+  become: yes
+  
+  tasks:
+  - name: nodejs:20 module enabling
+    ansible.builtin.command: dnf module enable nodejs:20 -y
+
+  - name: installing nodejs 
+    ansible.builtin.dnf: 
+      name: nodejs
+      state: present
+
+  - name: creating roboshop system user
+    ansible.builtin.user: 
+      name: roboshop
+      system: yes
+      home: /app
+      shell: /sbin/nologin
+      comment: roboshop system user
+
+  - name: creating application directory
+    ansible.builtin.file: 
+      path: /app
+      state: directory
+
+  - name: downloading catalogue
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip
+      dest: /tmp/catalogue.zip
+
+  - name: unarchive the catalogue
+    ansible.builtin.unarchive:
+      src: /tmp/catalogue.zip
+      dest: /app
+      remote_src: yes
+
+  - name: installing package dependencies
+    community.general.npm: 
+      path: /app
+
+  - name: copy the systemd catalogue service
+    ansible.builtin.copy: 
+      src: catalogue.service
+      dest: /etc/systemd/system/catalogue.service
+
+  - name: reloading the daemon
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+
+  - name: copy mongo repo
+    ansible.builtin.copy:
+      src: mongo.repo
+      dest: /etc/yum.repos.d/mongo.repo
+
+  - name: install mongodb client
+    ansible.builtin.dnf:
+      name: mongodb-mongosh
+      state: present
+  
+  - name: check if products loaded into the catalogue
+    ansible.builtin.command: mongosh --host "{{ MONGODB_HOST }}" --quiet --eval 'db.getMongo().getDBNames().indexOf("catalogue")'
+    register: catalogue_output
+
+  - name: print the catalogue output
+    ansible.builtin.debug:
+      msg: "{{ catalogue_output }}"
+
+  - name: load the products into the catalogue if products does't exist
+    ansible.builtin.shell: mongosh --host "{{ MONGODB_HOST }}" < /app/db/master-data.js
+    when: catalogue_output.stdout | int < 0
+
+  - name: start and enable the catalogue
+    ansible.builtin.service:
+      name: catalogue
+      enabled: yes
+      state: restarted
+
+
+
