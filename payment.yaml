@@ -42,4 +42,17 @@
     args:
       chdir: /app
 
-  
+  - name: creating payment service
+    ansible.builtin.template:
+      src: payment.service
+      dest: /etc/systemd/system/payment.service
+
+  - name: reloading the systemctl daemon
+    ansible.builtin.systemd_service:
+    daemon_reload: true
+
+  - name: enable and start payment service
+    anible.builtin.service:
+      name: payment
+      enabled: yes
+      state: restarted
