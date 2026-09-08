@@ -1,10 +1,45 @@
 - name: configuring python
-  ansible.builtin.dnf:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - python3
-    - gcc
-    - python3-devel
-  
+  hosts: payment
+  become: yes
+  tasks:
+  - name: installing python and its dependencies
+    ansible.builtin.dnf:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - python3
+      - gcc
+      - python3-devel
+
+  - name: creating roboshop system user
+    ansible.builtin.user:
+      name: roboshop
+      system: true
+      home: /app
+      shell: /sbin/nologin
+      comment: roboshop system user
+
+  - name: create application directory
+    ansible.builtin.file:
+      path: /app
+      state: directory
+
+  - name: download the application url
+    ansible.builtin.get_url:
+      url: https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip
+      dest: /tmp/payment.zip
+
+  - name: unzip the payment directory
+    ansible.builtin.unarchive:
+      src: /tmp/payment.zip
+      dest: /app
+      remote_src: yes
+
+  - name: installing dependencies
+    ansible.builtin.pip:
+      requirements: requirements.txt
+      executable: pip3.9
+    args:
+      chdir: /app
+
   
