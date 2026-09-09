@@ -2,8 +2,8 @@
   hosts: all
   connection: local
   vars:
-    sg_id: 
-    ami_id:
+    sg_id: sg-0fe27bbaf69cca740
+    ami_id: ami-0220d79f3f480ecf5
     domain_name: sukr.store
     env: dev
     action: create
