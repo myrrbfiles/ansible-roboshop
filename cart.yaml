@@ -12,7 +12,7 @@
       state: present
 
   - name: creating roboshop system user
-    ansible.builtin.cart: 
+    ansible.builtin.user: 
       name: roboshop
       system: yes
       home: /app
