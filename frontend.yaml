@@ -23,7 +23,7 @@
 
   - name: create nginx html directory
     ansible.builtin.file:
-      state: present
+      state: directory
       path: /usr/share/nginx/html
 
   - name: download the frontend content
