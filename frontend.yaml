@@ -14,7 +14,7 @@
     ansible.builtin.service:
       name: nginx
       enabled: yes
-      start: started
+      state: started
 
   - name: remove the default content of nginx html page
     ansible.builtin.file:
